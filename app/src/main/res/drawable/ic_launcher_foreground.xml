@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Foreground layer for the adaptive launcher icon.
+    Baker's / chef's toque (toque blanche) in white.
+    The safe zone for adaptive icons is the central 72dp × 72dp area (18dp inset on all sides).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Puffed dome of the toque -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,75 Q14,50 26,34 Q36,18 54,16 Q72,18 82,34 Q94,50 80,75 Z" />
+
+    <!-- Headband / brim — sits on top of the dome's lower edge -->
+    <path
+        android:fillColor="#DDDDDD"
+        android:pathData="M22,75 L86,75 L86,88 Q54,93 22,88 Z" />
+
+    <!-- Horizontal crease lines on the dome to give it a quilted look -->
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:fillColor="#00000000"
+        android:pathData="M30,62 Q54,58 78,62" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:fillColor="#00000000"
+        android:pathData="M26,50 Q54,44 82,50" />
+</vector>

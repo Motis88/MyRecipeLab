@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">מנהל מתכונים</string>
+
+    <!-- Bottom navigation -->
+    <string name="recipes">מתכונים</string>
+    <string name="favorites">מועדפים</string>
+    <string name="settings">הגדרות</string>
+
+    <!-- Recipe list -->
+    <string name="search_recipes">חפש מתכונים\u2026</string>
+    <string name="no_recipes_found">לא נמצאו מתכונים</string>
+    <string name="no_favorites">אין מועדפים עדיין</string>
+    <string name="all_categories">הכל</string>
+    <string name="sort_recent">אחרון</string>
+    <string name="sort_alphabetical">א\u2013ת</string>
+    <string name="ingredient_count_format">%d מרכיבים</string>
+    <string name="add_to_favorites">הוסף למועדפים</string>
+    <string name="remove_from_favorites">הסר ממועדפים</string>
+
+    <!-- Recipe detail -->
+    <string name="ingredients">מרכיבים</string>
+    <string name="steps">שלבי הכנה</string>
+    <string name="notes">הערות</string>
+    <string name="general_notes">הערות כלליות</string>
+    <string name="recipe_not_found">המתכון לא נמצא</string>
+    <string name="error_occurred">אירעה שגיאה</string>
+    <string name="share">שתף</string>
+    <string name="share_as_text">שתף כטקסט</string>
+    <string name="share_as_json">שתף כ-JSON</string>
+
+    <!-- Recipe edit -->
+    <string name="add_recipe">הוסף מתכון</string>
+    <string name="edit_recipe">ערוך מתכון</string>
+    <string name="save">שמור</string>
+    <string name="cancel">ביטול</string>
+    <string name="back">חזור</string>
+    <string name="parse">נתח</string>
+    <string name="title_label">כותרת</string>
+    <string name="category">קטגוריה</string>
+    <string name="paste_recipe_text">הדבק טקסט מתכון כאן\u2026</string>
+    <string name="manual_mode">מעבר להזנה ידנית</string>
+    <string name="add_ingredient">הוסף מרכיב</string>
+    <string name="add_step">הוסף שלב</string>
+    <string name="add_note">הוסף הערה</string>
+    <string name="remove">הסר</string>
+    <string name="move_up">העבר למעלה</string>
+    <string name="move_down">העבר למטה</string>
+    <string name="ingredient_hint">מרכיב</string>
+    <string name="step_hint">שלב</string>
+    <string name="note_hint">הערה</string>
+    <string name="confidence_high">המתכון נותח בהצלחה</string>
+    <string name="confidence_low">רמת ביטחון נמוכה \u2014 אנא בדוק וערוך</string>
+    <string name="recipe_saved">המתכון נשמר</string>
+    <string name="title_required">נדרשת כותרת</string>
+    <string name="parsing_text">מנתח\u2026</string>
+    <string name="new_category">קטגוריה חדשה\u2026</string>
+
+    <!-- Delete -->
+    <string name="delete_recipe">מחק מתכון</string>
+    <string name="delete_confirmation">האם אתה בטוח שברצונך למחוק מתכון זה? פעולה זו אינה ניתנת לביטול.</string>
+    <string name="delete">מחק</string>
+
+    <!-- Settings -->
+    <string name="language">שפה</string>
+    <string name="theme">ערכת נושא</string>
+    <string name="export_recipes">ייצוא מתכונים</string>
+    <string name="import_recipes">ייבוא מתכונים</string>
+    <string name="import_export_help">ייצוא שומר את כל המתכונים שלך כקובץ JSON. לייבוא, בחר קובץ JSON שיוצא בעבר מהאפליקציה הזו.</string>
+    <string name="export_success">המתכונים יוצאו בהצלחה</string>
+    <string name="import_success">%d מתכונים יובאו בהצלחה</string>
+    <string name="import_merge">מזג עם קיימים</string>
+    <string name="import_overwrite">החלף הכל</string>
+    <string name="light">בהיר</string>
+    <string name="dark">כהה</string>
+    <string name="system_default">ברירת מחדל מערכת</string>
+    <string name="english">אנגלית</string>
+    <string name="hebrew">עברית</string>
+    <string name="data_management">ניהול נתונים</string>
+    <string name="appearance">מראה</string>
+    <string name="choose_import_strategy">בחר שיטת ייבוא</string>
+    <string name="import_file">בחר קובץ JSON</string>
+
+    <!-- Categories -->
+    <string name="category_main_course">מנה עיקרית</string>
+    <string name="category_dessert">קינוח</string>
+    <string name="category_salad">סלט</string>
+    <string name="category_soup">מרק</string>
+    <string name="category_appetizer">מנה ראשונה</string>
+    <string name="category_side_dish">תוספת</string>
+    <string name="category_breakfast">ארוחת בוקר</string>
+    <string name="category_bread">לחם ומאפים</string>
+    <string name="category_drink">משקה</string>
+    <string name="category_snack">חטיף</string>
+    <string name="category_sauce">רוטב וטבילה</string>
+    <string name="category_other">אחר</string>
+
+    <!-- Add recipe flow -->
+    <string name="how_to_add">איך תרצה להוסיף מתכון?</string>
+    <string name="paste_and_parse">הדבק טקסט ונתח אוטומטית</string>
+    <string name="paste_and_parse_desc">הדבק מתכון מכל מקור ואנחנו ננתח אותו אוטומטית</string>
+    <string name="enter_manually">הזן ידנית</string>
+    <string name="enter_manually_desc">מלא בעצמך כותרת, מרכיבים ושלבים</string>
+
+    <!-- Time & servings -->
+    <string name="prep_time">זמן הכנה</string>
+    <string name="cook_time">זמן בישול</string>
+    <string name="servings">מנות</string>
+    <string name="minutes_short">דק׳</string>
+    <string name="total_time">סה״כ: %d דק׳</string>
+    <string name="prep_time_format">הכנה %d דק׳</string>
+    <string name="cook_time_format">בישול %d דק׳</string>
+    <string name="servings_format">%d מנות</string>
+
+    <!-- Shopping list -->
+    <string name="shopping_list">רשימת קניות</string>
+    <string name="select_recipes">בחר מתכונים</string>
+    <string name="generate_list">צור רשימה</string>
+    <string name="shopping_list_empty">בחר מתכונים כדי ליצור רשימת קניות</string>
+    <string name="clear_list">נקה רשימה</string>
+    <string name="copy_list">העתק</string>
+    <string name="share_list">שתף רשימה</string>
+</resources>
