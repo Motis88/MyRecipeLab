@@ -1,5 +1,9 @@
 package com.example.recipemanager.presentation.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Favorite
@@ -54,10 +58,9 @@ fun MainScreen() {
                         icon = {
                             Icon(
                                 Icons.AutoMirrored.Filled.MenuBook,
-                                contentDescription = null
+                                contentDescription = stringResource(R.string.recipes)
                             )
-                        },
-                        label = { Text(stringResource(R.string.recipes)) }
+                        }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.FAVORITES,
@@ -73,10 +76,9 @@ fun MainScreen() {
                         icon = {
                             Icon(
                                 Icons.Default.Favorite,
-                                contentDescription = null
+                                contentDescription = stringResource(R.string.favorites)
                             )
-                        },
-                        label = { Text(stringResource(R.string.favorites)) }
+                        }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.SHOPPING_LIST,
@@ -92,10 +94,9 @@ fun MainScreen() {
                         icon = {
                             Icon(
                                 Icons.Default.ShoppingCart,
-                                contentDescription = null
+                                contentDescription = stringResource(R.string.shopping_list)
                             )
-                        },
-                        label = { Text(stringResource(R.string.shopping_list)) }
+                        }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.SETTINGS,
@@ -111,10 +112,9 @@ fun MainScreen() {
                         icon = {
                             Icon(
                                 Icons.Default.Settings,
-                                contentDescription = null
+                                contentDescription = stringResource(R.string.settings)
                             )
-                        },
-                        label = { Text(stringResource(R.string.settings)) }
+                        }
                     )
                 }
             }
@@ -122,9 +122,27 @@ fun MainScreen() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.RECIPE_LIST
+            startDestination = Routes.RECIPE_LIST,
+            enterTransition = {
+                fadeIn(animationSpec = tween(300)) +
+                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(300))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(300)) +
+                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300))
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(300))
+            }
         ) {
-            composable(Routes.RECIPE_LIST) {
+            composable(
+                Routes.RECIPE_LIST,
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }
+            ) {
                 RecipeListScreen(
                     onNavigateToDetail = { recipeId ->
                         navController.navigate(Routes.recipeDetail(recipeId))
@@ -156,19 +174,34 @@ fun MainScreen() {
                 )
             }
 
-            composable(Routes.FAVORITES) {
+            composable(
+                Routes.FAVORITES,
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }
+            ) {
                 FavoritesScreen(
                     onNavigateToDetail = { recipeId ->
                         navController.navigate(Routes.recipeDetail(recipeId))
+                    },
+                    onNavigateToAdd = {
+                        navController.navigate(Routes.recipeEdit())
                     }
                 )
             }
 
-            composable(Routes.SHOPPING_LIST) {
+            composable(
+                Routes.SHOPPING_LIST,
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }
+            ) {
                 ShoppingListScreen()
             }
 
-            composable(Routes.SETTINGS) {
+            composable(
+                Routes.SETTINGS,
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }
+            ) {
                 SettingsScreen()
             }
         }

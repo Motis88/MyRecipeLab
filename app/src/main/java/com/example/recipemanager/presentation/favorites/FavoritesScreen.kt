@@ -2,6 +2,7 @@ package com.example.recipemanager.presentation.favorites
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,10 +13,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +43,7 @@ import com.example.recipemanager.presentation.common.SortOrder
 @Composable
 fun FavoritesScreen(
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToAdd: () -> Unit,
     viewModel: FavoritesViewModel = viewModel(factory = FavoritesViewModel.factory())
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -47,6 +51,18 @@ fun FavoritesScreen(
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(stringResource(R.string.favorites)) })
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onNavigateToAdd,
+                icon = {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null
+                    )
+                },
+                text = { Text(stringResource(R.string.add_recipe)) }
+            )
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
@@ -100,7 +116,9 @@ fun FavoritesScreen(
                     EmptyState(message = stringResource(R.string.no_favorites))
                 }
                 else -> {
-                    LazyColumn {
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = 64.dp)
+                    ) {
                         items(uiState.recipes, key = { it.id }) { recipe ->
                             RecipeCard(
                                 recipe = recipe,

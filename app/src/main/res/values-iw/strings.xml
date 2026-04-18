@@ -15,7 +15,17 @@
     <string name="sort_recent">אחרון</string>
     <string name="sort_alphabetical">א\u2013ת</string>
     <string name="ingredient_count_format">%d מרכיבים</string>
+    <string name="step_count_format">%d שלבים</string>
     <string name="add_to_favorites">הוסף למועדפים</string>
+    <string name="keep_screen_on">שמור מסך דלוק</string>
+    <string name="cooking_timer">טיימר בישול</string>
+    <string name="start_timer_format">התחל %d דקות</string>
+    <string name="pause">השהה</string>
+    <string name="resume">המשך</string>
+    <string name="reset">איפוס</string>
+    <string name="minutes_format">%d דק׳</string>
+    <string name="quick_presets">בחירה מהירה</string>
+    <string name="custom_time">זמן מותאם אישית</string>
     <string name="remove_from_favorites">הסר ממועדפים</string>
 
     <!-- Recipe detail -->

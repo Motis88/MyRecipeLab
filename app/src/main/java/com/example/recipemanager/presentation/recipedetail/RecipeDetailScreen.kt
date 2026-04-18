@@ -19,6 +19,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Share
@@ -37,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,6 +60,7 @@ import com.example.recipemanager.core.parser.CategoryDetector
 import com.example.recipemanager.core.model.Recipe
 import com.example.recipemanager.core.util.IngredientScaler
 import com.example.recipemanager.data.sharing.RecipeFormatter
+import com.example.recipemanager.presentation.common.CookingTimer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -162,6 +168,13 @@ private fun RecipeDetailContent(
 ) {
     val context = LocalContext.current
     var showShareMenu by remember { mutableStateOf(false) }
+    var keepScreenOn by remember { mutableStateOf(false) }
+    val view = LocalView.current
+    
+    DisposableEffect(keepScreenOn) {
+        view.keepScreenOn = keepScreenOn
+        onDispose { view.keepScreenOn = false }
+    }
 
     if (showDeleteConfirm) {
         AlertDialog(
@@ -202,6 +215,14 @@ private fun RecipeDetailContent(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { keepScreenOn = !keepScreenOn }) {
+                        Icon(
+                            Icons.Default.LightMode,
+                            contentDescription = stringResource(R.string.keep_screen_on),
+                            tint = if (keepScreenOn) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     IconButton(onClick = onToggleFavorite) {
                         Icon(
                             imageVector = if (recipe.isFavorite) Icons.Default.Favorite
@@ -275,7 +296,7 @@ private fun RecipeDetailContent(
             modifier = Modifier
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp)
         ) {
             // Category
             if (recipe.category.isNotBlank()) {
@@ -309,6 +330,9 @@ private fun RecipeDetailContent(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
+
+            // Cooking Timer
+            CookingTimer()
 
             // Servings adjuster for scaling
             var adjustedServings by remember { mutableIntStateOf(recipe.servings.coerceAtLeast(1)) }
@@ -346,10 +370,18 @@ private fun RecipeDetailContent(
 
             // Ingredients
             if (recipe.ingredients.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.ingredients),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.FormatListBulleted,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.ingredients),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 recipe.ingredients.forEach { ingredient ->
                     val scaledText = IngredientScaler.scaleText(ingredient.text, scaleFactor)
@@ -378,10 +410,18 @@ private fun RecipeDetailContent(
 
             // Steps
             if (recipe.steps.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.steps),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Notes,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.steps),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 recipe.steps.forEachIndexed { index, step ->
                     Row(modifier = Modifier.padding(vertical = 4.dp)) {

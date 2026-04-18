@@ -138,7 +138,7 @@ fun RecipeEditScreen(
             modifier = Modifier
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp)
         ) {
             val showChoiceMode =
                 !uiState.isManualMode && !uiState.showPasteField && uiState.mode == EditMode.ADD && uiState.title.isBlank()

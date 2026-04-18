@@ -142,10 +142,15 @@ class RecipeParser(
             }
         }
 
-        // Second pass: propagate context — if a line is UNCLASSIFIED but surrounded by
-        // lines of the same type, classify it with reduced confidence
-        return initial.mapIndexed { index, classification ->
+        // Find the transition point from ingredients to steps
+        // (ingredients usually come first, then steps)
+        val firstStepIndex = initial.indexOfFirst { it.type == LineType.STEP }
+        val lastIngredientIndex = initial.indexOfLast { it.type == LineType.INGREDIENT }
+        
+        // Second pass: use structural heuristics to classify unclassified lines
+        val contextAware = initial.mapIndexed { index, classification ->
             if (classification.type != LineType.UNCLASSIFIED) return@mapIndexed classification
+            if (classification.text.isBlank()) return@mapIndexed classification
 
             val prevType = initial.getOrNull(index - 1)?.type
             val nextType = initial.getOrNull(index + 1)?.type
@@ -157,13 +162,58 @@ class RecipeParser(
                 return@mapIndexed classification.copy(type = prevType, confidence = 0.35)
             }
 
+            // If this line is before the first step and after ingredients started, likely ingredient
+            if (firstStepIndex > 0 && index < firstStepIndex && lastIngredientIndex >= 0 && index >= lastIngredientIndex - 5) {
+                val isShort = classification.text.trim().length < 60
+                if (isShort) {
+                    return@mapIndexed classification.copy(type = LineType.INGREDIENT, confidence = 0.3)
+                }
+            }
+
+            // If this line is after steps started, likely a step
+            if (firstStepIndex >= 0 && index > firstStepIndex) {
+                val prevNonEmpty = initial.subList(0, index).findLast { it.type != LineType.EMPTY }
+                if (prevNonEmpty?.type == LineType.STEP) {
+                    return@mapIndexed classification.copy(type = LineType.STEP, confidence = 0.3)
+                }
+            }
+
             // If previous neighbor is classified and line is short, likely same section
             if (prevType == LineType.INGREDIENT && classification.text.trim().length < 50) {
                 return@mapIndexed classification.copy(type = LineType.INGREDIENT, confidence = 0.35)
             }
+            
+            // If previous neighbor is a step, and this line is reasonably long, likely also a step
+            if (prevType == LineType.STEP && classification.text.trim().length > 20) {
+                return@mapIndexed classification.copy(type = LineType.STEP, confidence = 0.35)
+            }
 
             classification
         }
+        
+        // Third pass: if we still have many unclassified lines at the start (before steps),
+        // and they're short, treat them as ingredients
+        val finalClassifications = contextAware.mapIndexed { index, classification ->
+            if (classification.type != LineType.UNCLASSIFIED) return@mapIndexed classification
+            if (classification.text.isBlank()) return@mapIndexed classification
+            
+            // Count how many ingredients and steps we have
+            val ingredientCount = contextAware.count { it.type == LineType.INGREDIENT }
+            val stepCount = contextAware.count { it.type == LineType.STEP }
+            
+            // If we have very few ingredients but many steps, and this is a short line early on,
+            // it's probably an ingredient
+            if (ingredientCount < 3 && stepCount > 0 && classification.text.trim().length < 60) {
+                val isBeforeFirstStep = firstStepIndex < 0 || index < firstStepIndex
+                if (isBeforeFirstStep) {
+                    return@mapIndexed classification.copy(type = LineType.INGREDIENT, confidence = 0.25)
+                }
+            }
+            
+            classification
+        }
+
+        return finalClassifications
     }
 
     private fun calculateConfidence(

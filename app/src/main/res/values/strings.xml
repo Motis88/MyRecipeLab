@@ -14,7 +14,17 @@
     <string name="sort_recent">Recent</string>
     <string name="sort_alphabetical">A\u2013Z</string>
     <string name="ingredient_count_format">%d ingredients</string>
+    <string name="step_count_format">%d steps</string>
     <string name="add_to_favorites">Add to favorites</string>
+    <string name="keep_screen_on">Keep screen on</string>
+    <string name="cooking_timer">Cooking Timer</string>
+    <string name="start_timer_format">Start %d min</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="reset">Reset</string>
+    <string name="minutes_format">%d min</string>
+    <string name="quick_presets">Quick presets</string>
+    <string name="custom_time">Custom time</string>
     <string name="remove_from_favorites">Remove from favorites</string>
 
     <!-- Recipe detail -->

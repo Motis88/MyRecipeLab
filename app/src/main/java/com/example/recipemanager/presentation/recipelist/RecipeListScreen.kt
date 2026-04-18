@@ -2,6 +2,7 @@ package com.example.recipemanager.presentation.recipelist
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -174,7 +175,9 @@ fun RecipeListScreen(
                     )
                 }
                 else -> {
-                    LazyColumn {
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = 64.dp)
+                    ) {
                         items(uiState.recipes, key = { it.id }) { recipe ->
                             RecipeCard(
                                 recipe = recipe,
