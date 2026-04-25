@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.recipemanager.app.RecipeManagerApp
-import com.example.recipemanager.core.dispatchers.AppDispatchers
 import com.example.recipemanager.core.util.GroceryAggregator
 import com.example.recipemanager.domain.usecase.GetAllRecipesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,8 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
 class ShoppingListViewModel(
-    getAllRecipes: GetAllRecipesUseCase,
-    @Suppress("UNUSED_PARAMETER") private val dispatchers: AppDispatchers
+    getAllRecipes: GetAllRecipesUseCase
 ) : ViewModel() {
 
     private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
@@ -65,8 +63,7 @@ class ShoppingListViewModel(
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as RecipeManagerApp
                 ShoppingListViewModel(
-                    getAllRecipes = app.container.getAllRecipesUseCase,
-                    dispatchers = app.container.appDispatchers
+                    getAllRecipes = app.container.getAllRecipesUseCase
                 )
             }
         }

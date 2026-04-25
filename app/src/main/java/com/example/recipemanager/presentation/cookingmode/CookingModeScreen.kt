@@ -110,7 +110,7 @@ private fun CookingModeContent(
     var ttsReady by remember { mutableStateOf(false) }
     val tts = remember { mutableStateOf<TextToSpeech?>(null) }
 
-    // Initialise TTS engine once
+    // Initialize TTS engine once
     DisposableEffect(Unit) {
         val engine = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {

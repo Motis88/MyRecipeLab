@@ -41,12 +41,13 @@ object IngredientParser {
         '⅛' to 0.125, '⅜' to 0.375, '⅝' to 0.625, '⅞' to 0.875
     )
 
-    // Matches leading "2", "1/2", "1 1/2", "½" etc.
+    // Matches leading "2", "1/2", "1 1/2", "½" etc. Each alternative is anchored to ^ so
+    // the engine tries the most specific pattern first (whole + fraction > fraction > decimal > unicode).
     private val QTY_PATTERN = Regex(
-        """^\s*(\d+)\s+(\d+)\s*/\s*(\d+)|""" + // "1 1/2"
-        """^\s*(\d+)\s*/\s*(\d+)|""" +          // "1/2"
-        """^\s*(\d+(?:[.,]\d+)?)|""" +           // "2" or "2.5"
-        """^\s*([½¼¾⅓⅔⅛⅜⅝⅞])"""                // unicode fraction
+        """^\s*(\d+)\s+(\d+)\s*/\s*(\d+)""" +  // "1 1/2" — whole + fraction
+        """|^\s*(\d+)\s*/\s*(\d+)""" +           // "1/2"   — fraction only
+        """|^\s*(\d+(?:[.,]\d+)?)""" +            // "2" or "2.5" — integer/decimal
+        """|^\s*([½¼¾⅓⅔⅛⅜⅝⅞])"""               // unicode fraction character
     )
 
     data class ParsedIngredient(

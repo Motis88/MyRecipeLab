@@ -16,7 +16,11 @@ data class GroceryItem(
 
     private fun formatQty(qty: Double): String {
         val long = qty.toLong()
-        return if (qty == long.toDouble()) long.toString() else "%.2g".format(qty)
+        return if (qty == long.toDouble()) {
+            long.toString()
+        } else {
+            "%.2f".format(qty).trimEnd('0').trimEnd('.')
+        }
     }
 }
 
