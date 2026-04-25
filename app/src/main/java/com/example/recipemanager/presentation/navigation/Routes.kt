@@ -11,6 +11,7 @@ object Routes {
 
     const val RECIPE_DETAIL = "recipe_detail/{recipeId}"
     const val RECIPE_EDIT = "recipe_edit?recipeId={recipeId}"
+    const val COOKING_MODE = "cooking_mode/{recipeId}"
 
     val recipeDetailArgs = listOf(
         navArgument("recipeId") { type = NavType.StringType }
@@ -24,8 +25,14 @@ object Routes {
         }
     )
 
+    val cookingModeArgs = listOf(
+        navArgument("recipeId") { type = NavType.StringType }
+    )
+
     fun recipeDetail(recipeId: String): String = "recipe_detail/$recipeId"
 
     fun recipeEdit(recipeId: String? = null): String =
         if (recipeId != null) "recipe_edit?recipeId=$recipeId" else "recipe_edit"
+
+    fun cookingMode(recipeId: String): String = "cooking_mode/$recipeId"
 }

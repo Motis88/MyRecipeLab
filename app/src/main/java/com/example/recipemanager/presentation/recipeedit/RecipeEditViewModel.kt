@@ -31,7 +31,9 @@ class RecipeEditViewModel(
     private val parseRecipe: ParseRecipeUseCase,
     private val saveRecipe: SaveRecipeUseCase,
     private val getCategories: GetCategoriesUseCase,
-    private val dispatchers: AppDispatchers
+    private val dispatchers: AppDispatchers,
+    /** Flow from AppContainer — non-null when text was shared into the app. */
+    private val pendingShareText: MutableStateFlow<String?> = MutableStateFlow(null)
 ) : ViewModel() {
 
     private val recipeId: String? = savedStateHandle["recipeId"]
@@ -53,6 +55,14 @@ class RecipeEditViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
+        // Consume any text shared via ACTION_SEND into this new-recipe screen
+        if (isNew) {
+            val sharedText = pendingShareText.value
+            if (sharedText != null) {
+                pendingShareText.value = null
+                _uiState.update { it.copy(rawText = sharedText, showPasteField = true) }
+            }
+        }
         if (recipeId != null) {
             viewModelScope.launch(dispatchers.io) {
                 val recipe = getRecipeById(recipeId).first()
@@ -355,7 +365,8 @@ class RecipeEditViewModel(
                     parseRecipe = app.container.parseRecipeUseCase,
                     saveRecipe = app.container.saveRecipeUseCase,
                     getCategories = app.container.getCategoriesUseCase,
-                    dispatchers = app.container.appDispatchers
+                    dispatchers = app.container.appDispatchers,
+                    pendingShareText = app.container.pendingShareText
                 )
             }
         }

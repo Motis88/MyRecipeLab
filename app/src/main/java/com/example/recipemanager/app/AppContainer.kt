@@ -25,10 +25,14 @@ import com.example.recipemanager.domain.usecase.ParseRecipeUseCase
 import com.example.recipemanager.domain.usecase.SaveRecipeUseCase
 import com.example.recipemanager.domain.usecase.SearchRecipesUseCase
 import com.example.recipemanager.domain.usecase.ToggleFavoriteUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class AppContainer(context: Context) {
 
     val appDispatchers: AppDispatchers = AppDispatchers()
+
+    /** Holds text shared into the app via ACTION_SEND. Consumed by RecipeEditViewModel on init. */
+    val pendingShareText = MutableStateFlow<String?>(null)
 
     val database: AppDatabase = Room.databaseBuilder(
         context.applicationContext,

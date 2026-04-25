@@ -129,4 +129,26 @@
     <string name="clear_list">Clear list</string>
     <string name="copy_list">Copy</string>
     <string name="share_list">Share List</string>
+
+    <!-- Grocery categories -->
+    <string name="grocery_produce">Produce</string>
+    <string name="grocery_dairy">Dairy &amp; Eggs</string>
+    <string name="grocery_meat">Meat &amp; Poultry</string>
+    <string name="grocery_seafood">Seafood</string>
+    <string name="grocery_dry_goods">Dry Goods &amp; Pantry</string>
+    <string name="grocery_spices">Spices &amp; Herbs</string>
+    <string name="grocery_bakery">Bakery</string>
+    <string name="grocery_frozen">Frozen</string>
+    <string name="grocery_beverages">Beverages</string>
+    <string name="grocery_other">Other</string>
+
+    <!-- Cooking mode -->
+    <string name="cooking_mode">Cooking Mode</string>
+    <string name="cooking_step_of">Step %1$d of %2$d</string>
+    <string name="prev_step">Previous step</string>
+    <string name="next_step">Next step</string>
+    <string name="cooking_done">Done</string>
+    <string name="no_steps">No steps available</string>
+    <string name="tts_enable">Read aloud</string>
+    <string name="tts_disable">Stop reading</string>
 </resources>
