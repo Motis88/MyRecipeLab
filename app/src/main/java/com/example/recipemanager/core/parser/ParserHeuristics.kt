@@ -17,12 +17,20 @@ class ParserHeuristics {
         )
         private val HE_INGREDIENT_HEADERS = setOf(
             "מרכיבים", "מצרכים", "חומרים", "רשימת מרכיבים",
-            "רשימת חומרים", "מה צריך", "צריך"
+            "רשימת חומרים", "מה צריך", "צריך",
+            "המרכיבים", "המצרכים", "החומרים",
+            "לבצק", "למילוי", "לרוטב", "לציפוי", "לקרם", "לגנאש",
+            "לסירופ", "לדג", "לעוף", "לבשר", "לסלט", "לטיגון",
+            "לאבקת הסוכר", "לתערובת", "לפאי", "לבסיס",
+            "לקישוט", "לרינג", "לפירורים"
         )
         private val HE_STEP_HEADERS = setOf(
             "הוראות הכנה", "אופן הכנה", "שלבים", "הכנה",
             "הוראות", "דרך הכנה", "שיטת הכנה",
-            "אופן ההכנה", "הוראות ההכנה", "שלבי הכנה"
+            "אופן ההכנה", "הוראות ההכנה", "שלבי הכנה",
+            "הכנת המתכון", "הכנת הבצק", "הכנת הרוטב", "הכנת המילוי",
+            "צעדים", "שלבי הכנה", "להכנה", "תהליך ההכנה",
+            "אופן הבישול", "הכנת הציפוי", "הכנת הקרם"
         )
 
         val EN_UNITS_PATTERN: Regex = Regex(
@@ -112,6 +120,9 @@ class ParserHeuristics {
 
     fun detectSectionHeader(line: String, language: Language): LineType? {
         val trimmed = line.trim()
+            .replace(Regex("""\*+"""), "")          // strip markdown bold/italic (**)
+            .replace(Regex("""_+"""), "")           // strip markdown underline
+            .replace(Regex("""[\u200B-\u200F\u202A-\u202E\uFEFF]"""), "") // strip invisible RTL/LTR markers
             .removeSuffix(":")
             .removeSuffix("：")
             .trim()

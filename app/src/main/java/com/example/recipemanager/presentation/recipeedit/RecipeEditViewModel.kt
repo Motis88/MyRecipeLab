@@ -88,7 +88,10 @@ class RecipeEditViewModel(
         viewModelScope.launch(dispatchers.default) {
             val result = parseRecipe(raw)
             withContext(dispatchers.main) {
-                val forceManual = result.confidence < 0.4
+                val hasContent = result.ingredients.isNotEmpty() || result.steps.isNotEmpty()
+                val forceManual = result.confidence < 0.4 && !hasContent
+                val unclassifiedNotes = result.diagnostics.unclassifiedLines
+                    .filter { it.isNotBlank() }
                 _uiState.update {
                     it.copy(
                         isParsing = false,
@@ -101,6 +104,7 @@ class RecipeEditViewModel(
                         steps = result.steps.map { step ->
                             EditableStep(id = IdGenerator.generate(), text = step.text)
                         },
+                        generalNotes = unclassifiedNotes,
                         confidence = result.confidence,
                         parserDiagnostics = result.diagnostics,
                         isManualMode = forceManual

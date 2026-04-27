@@ -23,16 +23,7 @@ class CategoryDetector {
         val DEFAULT_CATEGORIES = listOf(
             CATEGORY_MAIN_COURSE,
             CATEGORY_DESSERT,
-            CATEGORY_APPETIZER,
-            CATEGORY_SIDE_DISH,
-            CATEGORY_SOUP,
-            CATEGORY_SALAD,
-            CATEGORY_BREAKFAST,
-            CATEGORY_BREAD,
-            CATEGORY_DRINK,
-            CATEGORY_SNACK,
-            CATEGORY_SAUCE,
-            CATEGORY_OTHER
+            CATEGORY_BREAD
         )
 
         /** Maps internal category key to a string resource ID for localized display. */
