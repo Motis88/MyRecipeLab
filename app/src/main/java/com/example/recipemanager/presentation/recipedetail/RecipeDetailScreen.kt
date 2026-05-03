@@ -54,6 +54,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -61,6 +63,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.recipemanager.R
 import com.example.recipemanager.core.model.Recipe
 import com.example.recipemanager.core.parser.CategoryDetector
@@ -340,6 +344,23 @@ private fun RecipeDetailContent(
                 .verticalScroll(rememberScrollState())
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp)
         ) {
+            // Recipe photo
+            if (!recipe.imagePath.isNullOrBlank()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(java.io.File(recipe.imagePath))
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             // Category
             if (recipe.category.isNotBlank()) {
                 val displayCategory = CategoryDetector.CATEGORY_DISPLAY_NAMES[recipe.category]

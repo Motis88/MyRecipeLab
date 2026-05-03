@@ -172,4 +172,5 @@
     <string name="repair_success">Fixed %d recipe(s) successfully</string>
     <string name="repair_no_changes">No recipes needed fixing</string>
     <string name="repair_error">Error during repair: %s</string>
+    <string name="recipe_photo">Recipe Photo</string>
 </resources>

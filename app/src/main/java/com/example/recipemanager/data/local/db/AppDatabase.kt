@@ -29,7 +29,7 @@ import com.example.recipemanager.data.local.fts.RecipeSearchFtsEntity
         RecipeSearchIndexEntity::class,
         RecipeSearchFtsEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -43,6 +43,12 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE recipes ADD COLUMN prepTimeMinutes INTEGER DEFAULT NULL")
                 db.execSQL("ALTER TABLE recipes ADD COLUMN cookTimeMinutes INTEGER DEFAULT NULL")
                 db.execSQL("ALTER TABLE recipes ADD COLUMN servings INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE recipes ADD COLUMN imagePath TEXT DEFAULT NULL")
             }
         }
     }

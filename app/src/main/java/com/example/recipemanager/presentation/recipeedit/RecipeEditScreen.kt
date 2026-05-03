@@ -68,6 +68,11 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -150,6 +155,57 @@ fun RecipeEditScreen(
 
     fun onScanFromGallery() {
         galleryLauncher.launch("image/*")
+    }
+
+    // Recipe photo launchers
+    val recipePhotoCameraUri = remember { mutableStateOf<Uri?>(null) }
+
+    val recipePhotoTakePictureLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            recipePhotoCameraUri.value?.let { uri ->
+                coroutineScope.launch {
+                    val path = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        saveImageToInternal(context, uri)
+                    }
+                    if (path != null) viewModel.updateImagePath(path)
+                }
+            }
+        }
+    }
+
+    val recipePhotoGalleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            coroutineScope.launch {
+                val path = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    saveImageToInternal(context, it)
+                }
+                if (path != null) viewModel.updateImagePath(path)
+            }
+        }
+    }
+
+    val photoCameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            val cacheDir = File(context.cacheDir, "camera_images").also { it.mkdirs() }
+            val file = File(cacheDir, "recipe_photo_${System.currentTimeMillis()}.jpg")
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            recipePhotoCameraUri.value = uri
+            recipePhotoTakePictureLauncher.launch(uri)
+        }
+    }
+
+    fun onTakeRecipePhoto() {
+        photoCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+    }
+
+    fun onSelectRecipePhotoFromGallery() {
+        recipePhotoGalleryLauncher.launch("image/*")
     }
 
     LaunchedEffect(uiState.saveResult) {
@@ -290,7 +346,11 @@ fun RecipeEditScreen(
                     onRemoveGeneralNote = viewModel::removeGeneralNote,
                     onPrepTimeChange = viewModel::updatePrepTime,
                     onCookTimeChange = viewModel::updateCookTime,
-                    onServingsChange = viewModel::updateServings
+                    onServingsChange = viewModel::updateServings,
+                    imagePath = uiState.imagePath,
+                    onSelectPhotoFromGallery = ::onSelectRecipePhotoFromGallery,
+                    onTakePhoto = ::onTakeRecipePhoto,
+                    onRemovePhoto = { viewModel.updateImagePath(null) }
                 )
             }
         }
@@ -504,8 +564,80 @@ private fun EditForm(
     onRemoveGeneralNote: (Int) -> Unit,
     onPrepTimeChange: (Int?) -> Unit,
     onCookTimeChange: (Int?) -> Unit,
-    onServingsChange: (Int) -> Unit
+    onServingsChange: (Int) -> Unit,
+    imagePath: String? = null,
+    onSelectPhotoFromGallery: () -> Unit = {},
+    onTakePhoto: () -> Unit = {},
+    onRemovePhoto: () -> Unit = {}
 ) {
+    // Recipe photo
+    Text(
+        text = stringResource(R.string.recipe_photo),
+        style = MaterialTheme.typography.titleMedium
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    if (imagePath != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    .data(java.io.File(imagePath))
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(MaterialTheme.shapes.medium)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            IconButton(onClick = onRemovePhoto) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = stringResource(R.string.remove),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = onTakePhoto,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    Icons.Default.PhotoCamera,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = stringResource(R.string.take_photo),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
+            OutlinedButton(
+                onClick = onSelectPhotoFromGallery,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = stringResource(R.string.choose_from_gallery),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+    Spacer(modifier = Modifier.height(16.dp))
+    HorizontalDivider()
+    Spacer(modifier = Modifier.height(16.dp))
+
     // Title
     OutlinedTextField(
         value = uiState.title,
@@ -808,6 +940,25 @@ private fun EditableItemRow(
                 style = MaterialTheme.typography.labelSmall
             )
         }
+    }
+}
+
+/**
+ * Copies an image URI to the app's internal storage and returns the absolute file path.
+ * Must be called from a background thread. Returns null if the copy fails.
+ */
+private fun saveImageToInternal(context: android.content.Context, uri: android.net.Uri): String? {
+    return try {
+        val dir = java.io.File(context.filesDir, "recipe_images").also { it.mkdirs() }
+        val file = java.io.File(dir, "recipe_img_${System.currentTimeMillis()}.jpg")
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            file.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        file.absolutePath
+    } catch (_: Exception) {
+        null
     }
 }
 

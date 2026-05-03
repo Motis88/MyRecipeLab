@@ -317,6 +317,10 @@ class RecipeEditViewModel(
         _uiState.update { it.copy(isOcrProcessing = processing) }
     }
 
+    fun updateImagePath(path: String?) {
+        _uiState.update { it.copy(imagePath = path) }
+    }
+
     // ---- Private helpers ----
 
     private fun buildRecipe(state: RecipeEditUiState): Recipe {
@@ -338,7 +342,8 @@ class RecipeEditViewModel(
             cookTimeMinutes = state.cookTimeMinutes,
             servings = state.servings,
             createdAt = now,
-            updatedAt = now
+            updatedAt = now,
+            imagePath = state.imagePath
         )
     }
 
@@ -359,7 +364,8 @@ class RecipeEditViewModel(
         confidence = 1.0,
         prepTimeMinutes = recipe.prepTimeMinutes,
         cookTimeMinutes = recipe.cookTimeMinutes,
-        servings = recipe.servings
+        servings = recipe.servings,
+        imagePath = recipe.imagePath
     )
 
     companion object {

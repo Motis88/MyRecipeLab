@@ -54,7 +54,8 @@ object RecipeMapper {
             cookTimeMinutes = entity.recipe.cookTimeMinutes,
             servings = entity.recipe.servings,
             createdAt = entity.recipe.createdAt,
-            updatedAt = entity.recipe.updatedAt
+            updatedAt = entity.recipe.updatedAt,
+            imagePath = entity.recipe.imagePath
         )
     }
 
@@ -69,7 +70,8 @@ object RecipeMapper {
             cookTimeMinutes = recipe.cookTimeMinutes,
             servings = recipe.servings,
             createdAt = recipe.createdAt,
-            updatedAt = recipe.updatedAt
+            updatedAt = recipe.updatedAt,
+            imagePath = recipe.imagePath
         )
     }
 

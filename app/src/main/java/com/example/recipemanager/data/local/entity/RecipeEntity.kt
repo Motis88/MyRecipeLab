@@ -35,5 +35,7 @@ data class RecipeEntity(
     @ColumnInfo(name = "createdAt")
     val createdAt: Long,
     @ColumnInfo(name = "updatedAt")
-    val updatedAt: Long
+    val updatedAt: Long,
+    @ColumnInfo(name = "imagePath")
+    val imagePath: String? = null
 )

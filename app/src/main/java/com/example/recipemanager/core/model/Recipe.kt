@@ -13,7 +13,8 @@ data class Recipe(
     val cookTimeMinutes: Int? = null,
     val servings: Int = 1,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val imagePath: String? = null
 )
 
 data class Ingredient(
