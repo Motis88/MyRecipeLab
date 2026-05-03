@@ -130,4 +130,26 @@
     <string name="clear_list">נקה רשימה</string>
     <string name="copy_list">העתק</string>
     <string name="share_list">שתף רשימה</string>
+
+    <!-- Grocery categories -->
+    <string name="grocery_produce">ירקות ופירות</string>
+    <string name="grocery_dairy">מוצרי חלב וביצים</string>
+    <string name="grocery_meat">בשר ועוף</string>
+    <string name="grocery_seafood">דגים ופירות ים</string>
+    <string name="grocery_dry_goods">מוצרים יבשים ומזווה</string>
+    <string name="grocery_spices">תבלינים ועשבי תיבול</string>
+    <string name="grocery_bakery">מוצרי מאפייה</string>
+    <string name="grocery_frozen">מוצרים קפואים</string>
+    <string name="grocery_beverages">משקאות</string>
+    <string name="grocery_other">אחר</string>
+
+    <!-- Cooking mode -->
+    <string name="cooking_mode">מצב בישול</string>
+    <string name="cooking_step_of">שלב %1$d מתוך %2$d</string>
+    <string name="prev_step">שלב קודם</string>
+    <string name="next_step">שלב הבא</string>
+    <string name="cooking_done">סיום</string>
+    <string name="no_steps">אין שלבים זמינים</string>
+    <string name="tts_enable">קרא בקול</string>
+    <string name="tts_disable">הפסק קריאה</string>
 </resources>

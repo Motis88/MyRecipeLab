@@ -31,7 +31,12 @@ class RecipeEditViewModel(
     private val parseRecipe: ParseRecipeUseCase,
     private val saveRecipe: SaveRecipeUseCase,
     private val getCategories: GetCategoriesUseCase,
-    private val dispatchers: AppDispatchers
+    private val dispatchers: AppDispatchers,
+    /**
+     * Text shared into the app via ACTION_SEND, captured and cleared by the factory at ViewModel
+     * creation time. Non-null only when this is a new-recipe screen opened via share intent.
+     */
+    private val initialSharedText: String? = null
 ) : ViewModel() {
 
     private val recipeId: String? = savedStateHandle["recipeId"]
@@ -53,6 +58,10 @@ class RecipeEditViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
+        // Pre-fill paste field when text was shared into the app via ACTION_SEND
+        if (isNew && initialSharedText != null) {
+            _uiState.update { it.copy(rawText = initialSharedText, showPasteField = true) }
+        }
         if (recipeId != null) {
             viewModelScope.launch(dispatchers.io) {
                 val recipe = getRecipeById(recipeId).first()
@@ -353,13 +362,18 @@ class RecipeEditViewModel(
         fun factory(): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as RecipeManagerApp
+                // Capture and atomically clear the pending share text. This prevents a
+                // navigation loop in MainScreen: once null, the LaunchedEffect won't re-navigate.
+                val sharedText = app.container.pendingShareText.value
+                if (sharedText != null) app.container.pendingShareText.value = null
                 RecipeEditViewModel(
                     savedStateHandle = createSavedStateHandle(),
                     getRecipeById = app.container.getRecipeByIdUseCase,
                     parseRecipe = app.container.parseRecipeUseCase,
                     saveRecipe = app.container.saveRecipeUseCase,
                     getCategories = app.container.getCategoriesUseCase,
-                    dispatchers = app.container.appDispatchers
+                    dispatchers = app.container.appDispatchers,
+                    initialSharedText = sharedText
                 )
             }
         }

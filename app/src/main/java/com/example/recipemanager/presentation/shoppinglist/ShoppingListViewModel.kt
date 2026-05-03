@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.recipemanager.app.RecipeManagerApp
-import com.example.recipemanager.core.dispatchers.AppDispatchers
+import com.example.recipemanager.core.util.GroceryAggregator
 import com.example.recipemanager.domain.usecase.GetAllRecipesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,8 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
 class ShoppingListViewModel(
-    getAllRecipes: GetAllRecipesUseCase,
-    private val dispatchers: AppDispatchers
+    getAllRecipes: GetAllRecipesUseCase
 ) : ViewModel() {
 
     private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
@@ -25,22 +24,22 @@ class ShoppingListViewModel(
         getAllRecipes(),
         _selectedIds
     ) { recipes, selected ->
-        val items = if (selected.isEmpty()) {
+        val groceryItems = if (selected.isEmpty()) {
             emptyList()
         } else {
-            recipes
+            val texts = recipes
                 .filter { it.id in selected }
                 .flatMap { it.ingredients }
                 .map { it.text.trim() }
                 .filter { it.isNotBlank() }
-                .groupBy { normalizeIngredient(it) }
-                .map { (_, group) -> group.first() }
-                .sorted()
+            GroceryAggregator.aggregate(texts)
         }
+        val byCategory = GroceryAggregator.groupByCategory(groceryItems)
         ShoppingListUiState(
             allRecipes = recipes,
             selectedRecipeIds = selected,
-            shoppingItems = items,
+            groceryItems = groceryItems,
+            groceryByCategory = byCategory,
             isLoading = false
         )
     }.stateIn(
@@ -59,18 +58,15 @@ class ShoppingListViewModel(
         _selectedIds.value = emptySet()
     }
 
-    private fun normalizeIngredient(text: String): String =
-        text.lowercase().trim().replace(Regex("""\d+[./]?\d*\s*"""), "").trim()
-
     companion object {
         fun factory(): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as RecipeManagerApp
                 ShoppingListViewModel(
-                    getAllRecipes = app.container.getAllRecipesUseCase,
-                    dispatchers = app.container.appDispatchers
+                    getAllRecipes = app.container.getAllRecipesUseCase
                 )
             }
         }
     }
 }
+

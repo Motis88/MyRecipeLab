@@ -15,16 +15,21 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.recipemanager.R
+import com.example.recipemanager.app.RecipeManagerApp
+import com.example.recipemanager.presentation.cookingmode.CookingModeScreen
 import com.example.recipemanager.presentation.favorites.FavoritesScreen
 import com.example.recipemanager.presentation.recipedetail.RecipeDetailScreen
 import com.example.recipemanager.presentation.recipeedit.RecipeEditScreen
@@ -40,6 +45,19 @@ fun MainScreen() {
 
     val topLevelRoutes = listOf(Routes.RECIPE_LIST, Routes.FAVORITES, Routes.SHOPPING_LIST, Routes.SETTINGS)
     val showBottomBar = currentRoute in topLevelRoutes
+
+    // Observe pending shared text from share intents
+    val app = LocalContext.current.applicationContext as RecipeManagerApp
+    val pendingShareText by app.container.pendingShareText.collectAsStateWithLifecycle(null)
+
+    LaunchedEffect(pendingShareText) {
+        if (pendingShareText != null) {
+            navController.navigate(Routes.recipeEdit()) {
+                launchSingleTop = true
+            }
+            // The text is consumed by RecipeEditViewModel on init via pendingShareText flow
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -163,6 +181,9 @@ fun MainScreen() {
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToEdit = { recipeId ->
                         navController.navigate(Routes.recipeEdit(recipeId))
+                    },
+                    onNavigateToCookingMode = { recipeId ->
+                        navController.navigate(Routes.cookingMode(recipeId))
                     }
                 )
             }
@@ -206,6 +227,18 @@ fun MainScreen() {
             ) {
                 SettingsScreen()
             }
+
+            composable(
+                route = Routes.COOKING_MODE,
+                arguments = Routes.cookingModeArgs,
+                enterTransition = { fadeIn(tween(300)) },
+                exitTransition = { fadeOut(tween(300)) }
+            ) {
+                CookingModeScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
+

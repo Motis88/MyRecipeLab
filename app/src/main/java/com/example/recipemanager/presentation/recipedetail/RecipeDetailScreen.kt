@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Share
@@ -67,6 +68,7 @@ import com.example.recipemanager.presentation.common.CookingTimer
 fun RecipeDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit,
+    onNavigateToCookingMode: (String) -> Unit = {},
     viewModel: RecipeDetailViewModel = viewModel(factory = RecipeDetailViewModel.factory())
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -145,6 +147,7 @@ fun RecipeDetailScreen(
                 showDeleteConfirm = showDeleteConfirm,
                 onNavigateBack = onNavigateBack,
                 onEdit = { onNavigateToEdit(state.recipe.id) },
+                onCookingMode = { onNavigateToCookingMode(state.recipe.id) },
                 onToggleFavorite = viewModel::toggleFavorite,
                 onRequestDelete = viewModel::requestDelete,
                 onCancelDelete = viewModel::cancelDelete,
@@ -161,6 +164,7 @@ private fun RecipeDetailContent(
     showDeleteConfirm: Boolean,
     onNavigateBack: () -> Unit,
     onEdit: () -> Unit,
+    onCookingMode: () -> Unit,
     onToggleFavorite: () -> Unit,
     onRequestDelete: () -> Unit,
     onCancelDelete: () -> Unit,
@@ -215,6 +219,16 @@ private fun RecipeDetailContent(
                     }
                 },
                 actions = {
+                    // Cooking mode
+                    if (recipe.steps.isNotEmpty()) {
+                        IconButton(onClick = onCookingMode) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.MenuBook,
+                                contentDescription = stringResource(R.string.cooking_mode),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     IconButton(onClick = { keepScreenOn = !keepScreenOn }) {
                         Icon(
                             Icons.Default.LightMode,
