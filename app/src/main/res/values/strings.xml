@@ -165,4 +165,11 @@
     <string name="more_options">More options</string>
     <string name="screen_on_disable">Turn screen-on off</string>
     <string name="ingredients_in_step">Used in this step</string>
+
+    <!-- Repair recipes -->
+    <string name="repair_recipes">Fix Old Recipes</string>
+    <string name="repair_recipes_help">Automatically separates ingredients from steps in recipes that were entered without proper structure.</string>
+    <string name="repair_success">Fixed %d recipe(s) successfully</string>
+    <string name="repair_no_changes">No recipes needed fixing</string>
+    <string name="repair_error">Error during repair: %s</string>
 </resources>

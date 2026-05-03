@@ -13,6 +13,7 @@ import com.example.recipemanager.domain.repository.ImportStrategy
 import com.example.recipemanager.domain.repository.SettingsRepository
 import com.example.recipemanager.domain.usecase.ExportRecipesUseCase
 import com.example.recipemanager.domain.usecase.ImportRecipesUseCase
+import com.example.recipemanager.domain.usecase.RepairRecipesUseCase
 import com.example.recipemanager.presentation.MainActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,6 +26,7 @@ class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val exportRecipes: ExportRecipesUseCase,
     private val importRecipes: ImportRecipesUseCase,
+    private val repairRecipes: RepairRecipesUseCase,
     private val dispatchers: AppDispatchers
 ) : ViewModel() {
 
@@ -100,6 +102,28 @@ class SettingsViewModel(
         _operationState.value = _operationState.value.copy(importResult = null)
     }
 
+    fun repairRecipes() {
+        _operationState.value = _operationState.value.copy(isRepairing = true, repairResult = null)
+        viewModelScope.launch(dispatchers.io) {
+            val result = try {
+                val fixedCount = repairRecipes.invoke()
+                RepairUiResult.Success(fixedCount)
+            } catch (e: Exception) {
+                RepairUiResult.Error(e.message ?: "Repair failed")
+            }
+            withContext(dispatchers.main) {
+                _operationState.value = _operationState.value.copy(
+                    isRepairing = false,
+                    repairResult = result
+                )
+            }
+        }
+    }
+
+    fun clearRepairResult() {
+        _operationState.value = _operationState.value.copy(repairResult = null)
+    }
+
     companion object {
         fun factory(): ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -108,6 +132,7 @@ class SettingsViewModel(
                     settingsRepository = app.container.settingsRepository,
                     exportRecipes = app.container.exportRecipesUseCase,
                     importRecipes = app.container.importRecipesUseCase,
+                    repairRecipes = app.container.repairRecipesUseCase,
                     dispatchers = app.container.appDispatchers
                 )
             }

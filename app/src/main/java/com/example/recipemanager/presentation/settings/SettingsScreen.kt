@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -154,6 +155,29 @@ fun SettingsScreen(
         }
     }
 
+    // Repair result toast
+    LaunchedEffect(uiState.repairResult) {
+        when (val r = uiState.repairResult) {
+            is RepairUiResult.Success -> {
+                val msg = if (r.fixedCount > 0)
+                    context.getString(R.string.repair_success, r.fixedCount)
+                else
+                    context.getString(R.string.repair_no_changes)
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                viewModel.clearRepairResult()
+            }
+            is RepairUiResult.Error -> {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.repair_error, r.message),
+                    Toast.LENGTH_LONG
+                ).show()
+                viewModel.clearRepairResult()
+            }
+            null -> {}
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(stringResource(R.string.settings)) })
@@ -264,6 +288,38 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ── Repair ──
+            Text(
+                text = stringResource(R.string.repair_recipes),
+                style = MaterialTheme.typography.titleSmall
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.repair_recipes_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { viewModel.repairRecipes() },
+                enabled = !uiState.isRepairing,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (uiState.isRepairing) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(end = 8.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+                Text(stringResource(R.string.repair_recipes))
+            }
         }
     }
 }

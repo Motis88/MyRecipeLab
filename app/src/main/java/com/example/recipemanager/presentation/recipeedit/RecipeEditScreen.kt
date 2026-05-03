@@ -341,10 +341,7 @@ private fun AddModeChooser(
     Spacer(modifier = Modifier.height(12.dp))
 
     // Image scan card
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = {}
-    ) {
+    Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -368,16 +365,36 @@ private fun AddModeChooser(
             )
             Spacer(modifier = Modifier.height(10.dp))
             Row(
-                modifier = Modifier.padding(start = 40.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 40.dp),
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(onClick = onScanFromCamera) {
-                    Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(16.dp))
+                OutlinedButton(
+                    onClick = onScanFromCamera,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        Icons.Default.PhotoCamera,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.take_photo))
+                    Text(
+                        text = stringResource(R.string.take_photo),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
                 }
-                OutlinedButton(onClick = onScanFromGallery) {
-                    Text(stringResource(R.string.choose_from_gallery))
+                OutlinedButton(
+                    onClick = onScanFromGallery,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = stringResource(R.string.choose_from_gallery),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
                 }
             }
         }

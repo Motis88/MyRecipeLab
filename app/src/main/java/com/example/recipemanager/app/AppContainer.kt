@@ -24,6 +24,7 @@ import com.example.recipemanager.domain.usecase.ImportRecipesUseCase
 import com.example.recipemanager.domain.usecase.ParseRecipeUseCase
 import com.example.recipemanager.domain.usecase.SaveRecipeUseCase
 import com.example.recipemanager.domain.usecase.SearchRecipesUseCase
+import com.example.recipemanager.domain.usecase.RepairRecipesUseCase
 import com.example.recipemanager.domain.usecase.ToggleFavoriteUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -77,4 +78,5 @@ class AppContainer(context: Context) {
     val parseRecipeUseCase = ParseRecipeUseCase(RecipeParser())
     val exportRecipesUseCase = ExportRecipesUseCase(backupRepository)
     val importRecipesUseCase = ImportRecipesUseCase(backupRepository)
+    val repairRecipesUseCase = RepairRecipesUseCase(recipeRepository)
 }

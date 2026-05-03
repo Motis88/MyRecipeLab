@@ -10,8 +10,15 @@ data class SettingsUiState(
     val isExporting: Boolean = false,
     val exportResult: ExportUiResult? = null,
     val isImporting: Boolean = false,
-    val importResult: ImportUiResult? = null
+    val importResult: ImportUiResult? = null,
+    val isRepairing: Boolean = false,
+    val repairResult: RepairUiResult? = null
 )
+
+sealed class RepairUiResult {
+    data class Success(val fixedCount: Int) : RepairUiResult()
+    data class Error(val message: String) : RepairUiResult()
+}
 
 sealed class ExportUiResult {
     data class Success(val json: String) : ExportUiResult()
