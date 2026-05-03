@@ -43,5 +43,6 @@ data class RecipeEditUiState(
     val isLoadingRecipe: Boolean = false,
     val prepTimeMinutes: Int? = null,
     val cookTimeMinutes: Int? = null,
-    val servings: Int = 1
+    val servings: Int = 1,
+    val isOcrProcessing: Boolean = false
 )

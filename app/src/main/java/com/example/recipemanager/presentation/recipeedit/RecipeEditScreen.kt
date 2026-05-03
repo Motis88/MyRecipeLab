@@ -1,5 +1,8 @@
 package com.example.recipemanager.presentation.recipeedit
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +23,7 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,16 +49,27 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.recipemanager.R
 import com.example.recipemanager.core.parser.CategoryDetector
 import com.example.recipemanager.presentation.common.ConfidenceBanner
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import java.io.File
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,8 +80,77 @@ fun RecipeEditScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val categories by viewModel.availableCategories.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val savedMsg = stringResource(R.string.recipe_saved)
+    val ocrErrorMsg = stringResource(R.string.ocr_error)
+
+    // Camera temp file holder
+    val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
+
+    // Gallery launcher → OCR
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            viewModel.setOcrProcessing(true)
+            coroutineScope.launch {
+                try {
+                    val text = extractTextFromImage(context, it)
+                    viewModel.updateRawText(text)
+                    viewModel.enterPasteMode()
+                } catch (e: Exception) {
+                    snackbarHostState.showSnackbar(ocrErrorMsg)
+                } finally {
+                    viewModel.setOcrProcessing(false)
+                }
+            }
+        }
+    }
+
+    // Take-picture launcher → OCR
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            cameraImageUri.value?.let { uri ->
+                viewModel.setOcrProcessing(true)
+                coroutineScope.launch {
+                    try {
+                        val text = extractTextFromImage(context, uri)
+                        viewModel.updateRawText(text)
+                        viewModel.enterPasteMode()
+                    } catch (e: Exception) {
+                        snackbarHostState.showSnackbar(ocrErrorMsg)
+                    } finally {
+                        viewModel.setOcrProcessing(false)
+                    }
+                }
+            }
+        }
+    }
+
+    // Camera permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            val cacheDir = File(context.cacheDir, "camera_images").also { it.mkdirs() }
+            val file = File(cacheDir, "recipe_${System.currentTimeMillis()}.jpg")
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            cameraImageUri.value = uri
+            takePictureLauncher.launch(uri)
+        }
+    }
+
+    fun onScanFromCamera() {
+        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+    }
+
+    fun onScanFromGallery() {
+        galleryLauncher.launch("image/*")
+    }
 
     LaunchedEffect(uiState.saveResult) {
         when (uiState.saveResult) {
@@ -134,6 +218,22 @@ fun RecipeEditScreen(
             return@Scaffold
         }
 
+        if (uiState.isOcrProcessing) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(stringResource(R.string.ocr_processing))
+                }
+            }
+            return@Scaffold
+        }
+
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -148,7 +248,9 @@ fun RecipeEditScreen(
             if (showChoiceMode) {
                 AddModeChooser(
                     onPasteMode = viewModel::enterPasteMode,
-                    onManualMode = viewModel::enterManualMode
+                    onManualMode = viewModel::enterManualMode,
+                    onScanFromGallery = ::onScanFromGallery,
+                    onScanFromCamera = ::onScanFromCamera
                 )
             } else if (showPasteMode) {
                 PasteSection(
@@ -198,7 +300,9 @@ fun RecipeEditScreen(
 @Composable
 private fun AddModeChooser(
     onPasteMode: () -> Unit,
-    onManualMode: () -> Unit
+    onManualMode: () -> Unit,
+    onScanFromGallery: () -> Unit,
+    onScanFromCamera: () -> Unit
 ) {
     Text(
         text = stringResource(R.string.how_to_add),
@@ -231,6 +335,51 @@ private fun AddModeChooser(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 40.dp)
             )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    // Image scan card
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = {}
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.PhotoCamera,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = stringResource(R.string.scan_image),
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.scan_image_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 40.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.padding(start = 40.dp),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(onClick = onScanFromCamera) {
+                    Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(R.string.take_photo))
+                }
+                OutlinedButton(onClick = onScanFromGallery) {
+                    Text(stringResource(R.string.choose_from_gallery))
+                }
+            }
         }
     }
 
@@ -643,4 +792,31 @@ private fun EditableItemRow(
             )
         }
     }
+}
+
+/**
+ * Extracts text from an image URI using ML Kit Text Recognition.
+ * Runs on a coroutine — call from a coroutine scope.
+ */
+private suspend fun extractTextFromImage(
+    context: android.content.Context,
+    uri: Uri
+): String = suspendCancellableCoroutine { cont ->
+    val image = try {
+        InputImage.fromFilePath(context, uri)
+    } catch (e: Exception) {
+        cont.resumeWithException(e)
+        return@suspendCancellableCoroutine
+    }
+    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    recognizer.process(image)
+        .addOnSuccessListener { result ->
+            recognizer.close()
+            cont.resume(result.text)
+        }
+        .addOnFailureListener { e ->
+            recognizer.close()
+            cont.resumeWithException(e)
+        }
+    cont.invokeOnCancellation { recognizer.close() }
 }

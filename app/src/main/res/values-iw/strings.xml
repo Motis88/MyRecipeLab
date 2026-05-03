@@ -152,4 +152,18 @@
     <string name="no_steps">אין שלבים זמינים</string>
     <string name="tts_enable">קרא בקול</string>
     <string name="tts_disable">הפסק קריאה</string>
+
+    <!-- Image OCR -->
+    <string name="scan_image">סרוק תמונה</string>
+    <string name="scan_image_desc">צלם או בחר תמונה של מתכון ונקרא אותה אוטומטית</string>
+    <string name="take_photo">צלם תמונה</string>
+    <string name="choose_from_gallery">בחר מהגלריה</string>
+    <string name="ocr_processing">קורא את התמונה\u2026</string>
+    <string name="ocr_error">לא ניתן לקרוא טקסט מהתמונה. נסה תמונה ברורה יותר.</string>
+    <string name="scan_image_or">או</string>
+
+    <!-- More menu -->
+    <string name="more_options">אפשרויות נוספות</string>
+    <string name="screen_on_disable">כבה שמירת מסך דלוק</string>
+    <string name="ingredients_in_step">בשלב זה</string>
 </resources>

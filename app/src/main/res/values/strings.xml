@@ -151,4 +151,18 @@
     <string name="no_steps">No steps available</string>
     <string name="tts_enable">Read aloud</string>
     <string name="tts_disable">Stop reading</string>
+
+    <!-- Image OCR -->
+    <string name="scan_image">Scan Image</string>
+    <string name="scan_image_desc">Take a photo or choose from gallery to auto-read a recipe</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="choose_from_gallery">Choose from Gallery</string>
+    <string name="ocr_processing">Reading image\u2026</string>
+    <string name="ocr_error">Could not read text from image. Try a clearer photo.</string>
+    <string name="scan_image_or">or</string>
+
+    <!-- More menu -->
+    <string name="more_options">More options</string>
+    <string name="screen_on_disable">Turn screen-on off</string>
+    <string name="ingredients_in_step">Used in this step</string>
 </resources>

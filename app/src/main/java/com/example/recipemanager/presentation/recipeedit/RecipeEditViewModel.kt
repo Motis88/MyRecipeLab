@@ -313,6 +313,10 @@ class RecipeEditViewModel(
         _uiState.update { it.copy(saveResult = null) }
     }
 
+    fun setOcrProcessing(processing: Boolean) {
+        _uiState.update { it.copy(isOcrProcessing = processing) }
+    }
+
     // ---- Private helpers ----
 
     private fun buildRecipe(state: RecipeEditUiState): Recipe {

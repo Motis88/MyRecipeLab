@@ -4,6 +4,8 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,18 +17,21 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.automirrored.filled.Notes
-import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -43,8 +48,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -57,8 +62,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.recipemanager.R
-import com.example.recipemanager.core.parser.CategoryDetector
 import com.example.recipemanager.core.model.Recipe
+import com.example.recipemanager.core.parser.CategoryDetector
+import com.example.recipemanager.core.util.IngredientParser
 import com.example.recipemanager.core.util.IngredientScaler
 import com.example.recipemanager.data.sharing.RecipeFormatter
 import com.example.recipemanager.presentation.common.CookingTimer
@@ -171,7 +177,7 @@ private fun RecipeDetailContent(
     onConfirmDelete: () -> Unit
 ) {
     val context = LocalContext.current
-    var showShareMenu by remember { mutableStateOf(false) }
+    var showMoreMenu by remember { mutableStateOf(false) }
     var keepScreenOn by remember { mutableStateOf(false) }
     val view = LocalView.current
     
@@ -219,7 +225,7 @@ private fun RecipeDetailContent(
                     }
                 },
                 actions = {
-                    // Cooking mode
+                    // Cooking mode (primary action)
                     if (recipe.steps.isNotEmpty()) {
                         IconButton(onClick = onCookingMode) {
                             Icon(
@@ -229,14 +235,7 @@ private fun RecipeDetailContent(
                             )
                         }
                     }
-                    IconButton(onClick = { keepScreenOn = !keepScreenOn }) {
-                        Icon(
-                            Icons.Default.LightMode,
-                            contentDescription = stringResource(R.string.keep_screen_on),
-                            tint = if (keepScreenOn) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    // Favorite toggle
                     IconButton(onClick = onToggleFavorite) {
                         Icon(
                             imageVector = if (recipe.isFavorite) Icons.Default.Favorite
@@ -247,60 +246,89 @@ private fun RecipeDetailContent(
                             )
                         )
                     }
+                    // More actions menu
                     Box {
-                        IconButton(onClick = { showShareMenu = true }) {
+                        IconButton(onClick = { showMoreMenu = true }) {
                             Icon(
-                                Icons.Default.Share,
-                                contentDescription = stringResource(R.string.share)
+                                Icons.Default.MoreVert,
+                                contentDescription = stringResource(R.string.more_options)
                             )
                         }
                         DropdownMenu(
-                            expanded = showShareMenu,
-                            onDismissRequest = { showShareMenu = false }
+                            expanded = showMoreMenu,
+                            onDismissRequest = { showMoreMenu = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.share_as_text)) },
+                                leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) },
                                 onClick = {
-                                    showShareMenu = false
+                                    showMoreMenu = false
                                     val text = RecipeFormatter.formatAsText(recipe)
                                     val intent = Intent(Intent.ACTION_SEND).apply {
                                         type = "text/plain"
                                         putExtra(Intent.EXTRA_TEXT, text)
                                         putExtra(Intent.EXTRA_SUBJECT, recipe.title)
                                     }
-                                    context.startActivity(
-                                        Intent.createChooser(intent, null)
-                                    )
+                                    context.startActivity(Intent.createChooser(intent, null))
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.share_as_json)) },
+                                leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) },
                                 onClick = {
-                                    showShareMenu = false
+                                    showMoreMenu = false
                                     val json = RecipeFormatter.formatAsJson(recipe)
                                     val intent = Intent(Intent.ACTION_SEND).apply {
                                         type = "application/json"
                                         putExtra(Intent.EXTRA_TEXT, json)
                                         putExtra(Intent.EXTRA_SUBJECT, "${recipe.title}.json")
                                     }
-                                    context.startActivity(
-                                        Intent.createChooser(intent, null)
-                                    )
+                                    context.startActivity(Intent.createChooser(intent, null))
                                 }
                             )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.edit_recipe)) },
+                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                onClick = { showMoreMenu = false; onEdit() }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        stringResource(
+                                            if (keepScreenOn) R.string.screen_on_disable
+                                            else R.string.keep_screen_on
+                                        )
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.LightMode,
+                                        contentDescription = null,
+                                        tint = if (keepScreenOn) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                },
+                                onClick = { showMoreMenu = false; keepScreenOn = !keepScreenOn }
+                            )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        stringResource(R.string.delete_recipe),
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                onClick = { showMoreMenu = false; onRequestDelete() }
+                            )
                         }
-                    }
-                    IconButton(onClick = onEdit) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.edit_recipe)
-                        )
-                    }
-                    IconButton(onClick = onRequestDelete) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.delete_recipe)
-                        )
                     }
                 }
             )
@@ -437,26 +465,68 @@ private fun RecipeDetailContent(
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Pre-parse all ingredients once for matching
+                val parsedIngredients = remember(recipe.id) {
+                    recipe.ingredients.map { ing ->
+                        Pair(ing, IngredientParser.parse(ing.text))
+                    }
+                }
+
                 recipe.steps.forEachIndexed { index, step ->
-                    Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                        Text(
-                            text = "${index + 1}.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.width(28.dp)
-                        )
-                        Column {
+                    @OptIn(ExperimentalLayoutApi::class)
+                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                        Row {
                             Text(
-                                text = step.text,
-                                style = MaterialTheme.typography.bodyLarge
+                                text = "${index + 1}.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.width(28.dp)
                             )
-                            step.notes.forEach { note ->
+                            Column {
                                 Text(
-                                    text = note,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                                    text = step.text,
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
+                                step.notes.forEach { note ->
+                                    Text(
+                                        text = note,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+                        // Inline ingredient hints for this step
+                        val stepLower = step.text.lowercase()
+                        val referencedIngredients = parsedIngredients.filter { (_, parsed) ->
+                            val name = parsed.name.lowercase().trim()
+                            name.length >= 3 && stepLower.contains(name)
+                        }
+                        if (referencedIngredients.isNotEmpty()) {
+                            @Suppress("OPT_IN_USAGE")
+                            FlowRow(
+                                modifier = Modifier.padding(start = 28.dp, top = 4.dp, bottom = 2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                referencedIngredients.forEach { (ing, _) ->
+                                    val scaledText = IngredientScaler.scaleText(ing.text, scaleFactor)
+                                    AssistChip(
+                                        onClick = {},
+                                        label = {
+                                            Text(
+                                                text = scaledText,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                maxLines = 1
+                                            )
+                                        },
+                                        colors = AssistChipDefaults.assistChipColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                        )
+                                    )
+                                }
                             }
                         }
                     }
