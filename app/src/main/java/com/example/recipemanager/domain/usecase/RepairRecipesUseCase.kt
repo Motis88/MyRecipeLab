@@ -7,11 +7,12 @@ import com.example.recipemanager.core.util.IdGenerator
 import com.example.recipemanager.domain.repository.RecipeRepository
 
 /**
- * Scans all recipes that have no steps (everything was entered in ingredients),
- * re-parses the combined text with RecipeParser, and updates those where the parser
- * successfully separates ingredients from steps.
+ * Scans ALL recipes and:
+ * 1. Re-parses recipes with no steps (everything in ingredients) to separate them.
+ * 2. Cleans up every recipe: removes empty items, strips orphaned numbers,
+ *    normalises step numbering, trims whitespace — for visual symmetry.
  *
- * Returns the number of recipes actually repaired.
+ * Returns the number of recipes that were actually changed.
  */
 class RepairRecipesUseCase(
     private val repository: RecipeRepository,
@@ -22,42 +23,68 @@ class RepairRecipesUseCase(
         var fixedCount = 0
 
         for (recipe in recipes) {
-            // Only try to fix recipes that have ingredients but zero steps
-            if (recipe.steps.isNotEmpty() || recipe.ingredients.isEmpty()) continue
+            var current = recipe
 
-            // Reconstruct raw text from title + ingredients
-            val rawText = buildString {
-                appendLine(recipe.title)
-                appendLine()
-                recipe.ingredients.forEach { appendLine(it.text) }
+            // ── Pass 1: re-parse if there are no steps at all ──────────────────
+            if (current.steps.isEmpty() && current.ingredients.isNotEmpty()) {
+                val rawText = buildString {
+                    appendLine(current.title)
+                    appendLine()
+                    current.ingredients.forEach { appendLine(it.text) }
+                }
+                val result = parser.parse(rawText)
+                if (result.ingredients.isNotEmpty() && result.steps.isNotEmpty()) {
+                    current = current.copy(
+                        ingredients = result.ingredients.map { parsed ->
+                            Ingredient(id = IdGenerator.generate(), text = parsed.text, notes = emptyList())
+                        },
+                        steps = result.steps.map { parsed ->
+                            Step(id = IdGenerator.generate(), text = parsed.text, notes = emptyList())
+                        }
+                    )
+                }
             }
 
-            val result = parser.parse(rawText)
+            // ── Pass 2: clean up every recipe ───────────────────────────────────
+            val cleanIngredients = current.ingredients
+                .map { ing -> ing.copy(text = ing.text.trim()) }
+                .filter { it.text.isNotBlank() && !isStandaloneNumber(it.text) }
 
-            // Only update if parser found both parts
-            if (result.ingredients.isNotEmpty() && result.steps.isNotEmpty()) {
-                val repairedRecipe = recipe.copy(
-                    ingredients = result.ingredients.map { parsed ->
-                        Ingredient(
-                            id = IdGenerator.generate(),
-                            text = parsed.text,
-                            notes = emptyList()
-                        )
-                    },
-                    steps = result.steps.map { parsed ->
-                        Step(
-                            id = IdGenerator.generate(),
-                            text = parsed.text,
-                            notes = emptyList()
-                        )
-                    },
-                    updatedAt = System.currentTimeMillis()
+            val cleanSteps = current.steps
+                .map { step -> step.copy(text = stripLeadingNumber(step.text).trim()) }
+                .filter { it.text.isNotBlank() && !isStandaloneNumber(it.text) }
+
+            val changed = cleanIngredients != current.ingredients || cleanSteps != current.steps
+
+            if (changed) {
+                repository.updateRecipe(
+                    current.copy(
+                        ingredients = cleanIngredients,
+                        steps = cleanSteps,
+                        updatedAt = System.currentTimeMillis()
+                    )
                 )
-                repository.updateRecipe(repairedRecipe)
                 fixedCount++
             }
         }
 
         return fixedCount
+    }
+
+    /** Returns true if the text is just a number or number + punctuation, e.g. "1", "2.", "3:" */
+    private fun isStandaloneNumber(text: String): Boolean =
+        text.trim().matches(Regex("""^\d{1,3}[.:)]?$"""))
+
+    /**
+     * Removes a leading step number from text if present.
+     * Handles patterns like "1.", "1:", "1)", "שלב 1:", "Step 1:", etc.
+     */
+    private fun stripLeadingNumber(text: String): String {
+        val stripped = text
+            // "1. text" / "1: text" / "1) text"
+            .replace(Regex("""^\d{1,3}[.):\s]\s*"""), "")
+            // "שלב 1:" / "Step 1:" (Hebrew/English)
+            .replace(Regex("""^(?:שלב|step)\s+\d{1,3}[.:)]\s*""", RegexOption.IGNORE_CASE), "")
+        return if (stripped.isBlank()) text else stripped
     }
 }

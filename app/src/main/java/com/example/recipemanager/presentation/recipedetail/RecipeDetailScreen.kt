@@ -167,7 +167,7 @@ fun RecipeDetailScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun RecipeDetailContent(
     recipe: Recipe,
@@ -383,9 +383,10 @@ private fun RecipeDetailContent(
                 if (recipe.servings > 1) add(stringResource(R.string.servings_format, recipe.servings))
             }
             if (timeChips.isNotEmpty()) {
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     timeChips.forEach { chip ->
                         SuggestionChip(onClick = {}, label = { Text(chip) })
