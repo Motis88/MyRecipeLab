@@ -4,6 +4,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
 object Routes {
+    const val TABS = "tabs"
     const val RECIPE_LIST = "recipe_list"
     const val FAVORITES = "favorites"
     const val SHOPPING_LIST = "shopping_list"

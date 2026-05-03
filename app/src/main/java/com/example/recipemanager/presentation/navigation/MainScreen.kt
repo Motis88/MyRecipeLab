@@ -4,6 +4,10 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Favorite
@@ -17,12 +21,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -43,8 +48,23 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val topLevelRoutes = listOf(Routes.RECIPE_LIST, Routes.FAVORITES, Routes.SHOPPING_LIST, Routes.SETTINGS)
-    val showBottomBar = currentRoute in topLevelRoutes
+    val showBottomBar = currentRoute == Routes.TABS
+
+    // Track which tab is selected (survives recomposition)
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(initialPage = selectedTab) { 4 }
+
+    // Sync: pager swipe → selectedTab state
+    LaunchedEffect(pagerState.settledPage) {
+        selectedTab = pagerState.settledPage
+    }
+
+    // Sync: bottom nav tap → pager scroll
+    LaunchedEffect(selectedTab) {
+        if (pagerState.currentPage != selectedTab) {
+            pagerState.animateScrollToPage(selectedTab)
+        }
+    }
 
     // Observe pending shared text from share intents
     val app = LocalContext.current.applicationContext as RecipeManagerApp
@@ -55,7 +75,6 @@ fun MainScreen() {
             navController.navigate(Routes.recipeEdit()) {
                 launchSingleTop = true
             }
-            // The text is consumed by RecipeEditViewModel on init via pendingShareText flow
         }
     }
 
@@ -64,76 +83,48 @@ fun MainScreen() {
             if (showBottomBar) {
                 NavigationBar {
                     NavigationBarItem(
-                        selected = currentRoute == Routes.RECIPE_LIST,
-                        onClick = {
-                            navController.navigate(Routes.RECIPE_LIST) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
                         icon = {
                             Icon(
                                 Icons.AutoMirrored.Filled.MenuBook,
                                 contentDescription = stringResource(R.string.recipes)
                             )
-                        }
+                        },
+                        label = { Text(stringResource(R.string.recipes)) }
                     )
                     NavigationBarItem(
-                        selected = currentRoute == Routes.FAVORITES,
-                        onClick = {
-                            navController.navigate(Routes.FAVORITES) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
                         icon = {
                             Icon(
                                 Icons.Default.Favorite,
                                 contentDescription = stringResource(R.string.favorites)
                             )
-                        }
+                        },
+                        label = { Text(stringResource(R.string.favorites)) }
                     )
                     NavigationBarItem(
-                        selected = currentRoute == Routes.SHOPPING_LIST,
-                        onClick = {
-                            navController.navigate(Routes.SHOPPING_LIST) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
                         icon = {
                             Icon(
                                 Icons.Default.ShoppingCart,
                                 contentDescription = stringResource(R.string.shopping_list)
                             )
-                        }
+                        },
+                        label = { Text(stringResource(R.string.shopping_list)) }
                     )
                     NavigationBarItem(
-                        selected = currentRoute == Routes.SETTINGS,
-                        onClick = {
-                            navController.navigate(Routes.SETTINGS) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
+                        selected = selectedTab == 3,
+                        onClick = { selectedTab = 3 },
                         icon = {
                             Icon(
                                 Icons.Default.Settings,
                                 contentDescription = stringResource(R.string.settings)
                             )
-                        }
+                        },
+                        label = { Text(stringResource(R.string.settings)) }
                     )
                 }
             }
@@ -142,7 +133,7 @@ fun MainScreen() {
         NavHost(
             modifier = Modifier.padding(innerPadding),
             navController = navController,
-            startDestination = Routes.RECIPE_LIST,
+            startDestination = Routes.TABS,
             enterTransition = {
                 fadeIn(animationSpec = tween(300)) +
                     slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300))
@@ -158,21 +149,40 @@ fun MainScreen() {
                 fadeOut(animationSpec = tween(300))
             }
         ) {
+            // ── All 4 tabs inside a swipeable pager ──
             composable(
-                Routes.RECIPE_LIST,
+                Routes.TABS,
                 enterTransition = { fadeIn(tween(200)) },
                 exitTransition = { fadeOut(tween(200)) }
             ) {
-                RecipeListScreen(
-                    onNavigateToDetail = { recipeId ->
-                        navController.navigate(Routes.recipeDetail(recipeId))
-                    },
-                    onNavigateToAdd = {
-                        navController.navigate(Routes.recipeEdit())
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    when (page) {
+                        0 -> RecipeListScreen(
+                            onNavigateToDetail = { recipeId ->
+                                navController.navigate(Routes.recipeDetail(recipeId))
+                            },
+                            onNavigateToAdd = {
+                                navController.navigate(Routes.recipeEdit())
+                            }
+                        )
+                        1 -> FavoritesScreen(
+                            onNavigateToDetail = { recipeId ->
+                                navController.navigate(Routes.recipeDetail(recipeId))
+                            },
+                            onNavigateToAdd = {
+                                navController.navigate(Routes.recipeEdit())
+                            }
+                        )
+                        2 -> ShoppingListScreen()
+                        else -> SettingsScreen()
                     }
-                )
+                }
             }
 
+            // ── Nested screens ──
             composable(
                 route = Routes.RECIPE_DETAIL,
                 arguments = Routes.recipeDetailArgs
@@ -195,37 +205,6 @@ fun MainScreen() {
                 RecipeEditScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
-            }
-
-            composable(
-                Routes.FAVORITES,
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }
-            ) {
-                FavoritesScreen(
-                    onNavigateToDetail = { recipeId ->
-                        navController.navigate(Routes.recipeDetail(recipeId))
-                    },
-                    onNavigateToAdd = {
-                        navController.navigate(Routes.recipeEdit())
-                    }
-                )
-            }
-
-            composable(
-                Routes.SHOPPING_LIST,
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }
-            ) {
-                ShoppingListScreen()
-            }
-
-            composable(
-                Routes.SETTINGS,
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }
-            ) {
-                SettingsScreen()
             }
 
             composable(
