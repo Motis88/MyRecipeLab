@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.min
 
 /**
  * On-device OCR using Tesseract4Android with the Hebrew trained data bundled in assets.
@@ -22,21 +23,18 @@ object TesseractOcrHelper {
 
     private const val LANG = "heb"
     private const val DATA_DIR_NAME = "tessdata"
-    // Bump this whenever a new traineddata file is bundled in assets.
     private const val MODEL_VERSION = 2
+    private const val MAX_DIM = 2000
 
-    /**
-     * Extracts text from [uri] using Tesseract Hebrew model.
-     * Must be called from a coroutine; runs on [Dispatchers.IO].
-     */
     suspend fun extractText(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
         ensureTrainedData(context)
         val tessDataDir = context.filesDir.absolutePath
 
-        val raw = decodeBitmap(context, uri)
-            ?: return@withContext ""
-        val bitmap = toGrayscale(raw)
-        if (raw !== bitmap) raw.recycle()
+        val raw = decodeBitmap(context, uri) ?: return@withContext ""
+        val scaled = scaleBitmap(raw)
+        if (raw !== scaled) raw.recycle()
+        val processed = toHighContrastGrayscale(scaled)
+        if (scaled !== processed) scaled.recycle()
 
         val api = TessBaseAPI()
         return@withContext try {
@@ -44,30 +42,48 @@ object TesseractOcrHelper {
                 return@withContext ""
             }
             api.pageSegMode = TessBaseAPI.PageSegMode.PSM_AUTO
-            api.setImage(bitmap)
+            api.setVariable("user_defined_dpi", "300")
+            api.setImage(processed)
             api.utF8Text?.trim() ?: ""
         } finally {
             api.recycle()
-            bitmap.recycle()
+            processed.recycle()
         }
     }
 
-    /** Convert bitmap to grayscale - Tesseract accuracy improves significantly. */
-    private fun toGrayscale(src: Bitmap): Bitmap {
+    /** Scale down to MAX_DIM on the longest side for optimal Tesseract performance. */
+    private fun scaleBitmap(src: Bitmap): Bitmap {
+        val w = src.width
+        val h = src.height
+        val maxSide = maxOf(w, h)
+        if (maxSide <= MAX_DIM) return src
+        val scale = MAX_DIM.toFloat() / maxSide
+        return Bitmap.createScaledBitmap(src, (w * scale).toInt(), (h * scale).toInt(), true)
+    }
+
+    /** Grayscale + contrast boost — higher contrast text recognized far more reliably. */
+    private fun toHighContrastGrayscale(src: Bitmap): Bitmap {
         val result = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(result)
         val paint = Paint()
         val cm = ColorMatrix()
+        // Desaturate
         cm.setSaturation(0f)
-        paint.colorFilter = ColorMatrixColorFilter(cm)
+        // Boost contrast: scale=1.5, translate=-38 (shifts midpoint down, increases separation)
+        val contrast = 1.5f
+        val translate = (-0.5f * 255 * (contrast - 1)).toInt().toFloat()
+        val contrastMatrix = ColorMatrix(floatArrayOf(
+            contrast, 0f, 0f, 0f, translate,
+            0f, contrast, 0f, 0f, translate,
+            0f, 0f, contrast, 0f, translate,
+            0f, 0f, 0f, 1f, 0f
+        ))
+        contrastMatrix.preConcat(cm)
+        paint.colorFilter = ColorMatrixColorFilter(contrastMatrix)
         canvas.drawBitmap(src, 0f, 0f, paint)
         return result
     }
 
-    /**
-     * Copies heb.traineddata from assets to the app files directory.
-     * Re-copies if MODEL_VERSION has increased (new model bundled in APK).
-     */
     private fun ensureTrainedData(context: Context) {
         val destDir = File(context.filesDir, DATA_DIR_NAME)
         val destFile = File(destDir, "$LANG.traineddata")
