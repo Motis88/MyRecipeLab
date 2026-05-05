@@ -42,12 +42,27 @@ android {
         compose = true
     }
 
+    packaging {
+        jniLibs {
+            pickFirsts += setOf(
+                "lib/arm64-v8a/libjpeg.so",
+                "lib/x86/libjpeg.so",
+                "lib/x86_64/libjpeg.so",
+                "lib/armeabi-v7a/libjpeg.so"
+            )
+        }
+    }
+
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
 }
 
 dependencies {
+    configurations.all {
+        exclude(group = "cz.adaptech.tesseract4android", module = "tesseract4android-openmp")
+    }
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -74,6 +89,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.mlkit.text.recognition)
     implementation(libs.coil.compose)
+    implementation(libs.tesseract4android) {
+        exclude(group = "cz.adaptech", module = "tesseract4android-openmp")
+    }
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -60,6 +60,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.recipemanager.R
+import com.example.recipemanager.core.ocr.TesseractOcrHelper
 import com.example.recipemanager.core.parser.CategoryDetector
 import com.example.recipemanager.presentation.common.ConfidenceBanner
 import com.google.mlkit.vision.common.InputImage
@@ -69,6 +70,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.Switch
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -91,6 +93,9 @@ fun RecipeEditScreen(
     val savedMsg = stringResource(R.string.recipe_saved)
     val ocrErrorMsg = stringResource(R.string.ocr_error)
 
+    // Hebrew OCR toggle (persisted per-screen invocation only)
+    var hebrewOcr by remember { mutableStateOf(false) }
+
     // Camera temp file holder
     val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
 
@@ -102,7 +107,11 @@ fun RecipeEditScreen(
             viewModel.setOcrProcessing(true)
             coroutineScope.launch {
                 try {
-                    val text = extractTextFromImage(context, it)
+                    val text = if (hebrewOcr) {
+                        TesseractOcrHelper.extractText(context, it)
+                    } else {
+                        extractTextFromImage(context, it)
+                    }
                     viewModel.updateRawText(text)
                     viewModel.enterPasteMode()
                 } catch (e: Exception) {
@@ -123,7 +132,11 @@ fun RecipeEditScreen(
                 viewModel.setOcrProcessing(true)
                 coroutineScope.launch {
                     try {
-                        val text = extractTextFromImage(context, uri)
+                        val text = if (hebrewOcr) {
+                            TesseractOcrHelper.extractText(context, uri)
+                        } else {
+                            extractTextFromImage(context, uri)
+                        }
                         viewModel.updateRawText(text)
                         viewModel.enterPasteMode()
                     } catch (e: Exception) {
@@ -306,7 +319,9 @@ fun RecipeEditScreen(
                     onPasteMode = viewModel::enterPasteMode,
                     onManualMode = viewModel::enterManualMode,
                     onScanFromGallery = ::onScanFromGallery,
-                    onScanFromCamera = ::onScanFromCamera
+                    onScanFromCamera = ::onScanFromCamera,
+                    hebrewOcr = hebrewOcr,
+                    onHebrewOcrChange = { hebrewOcr = it }
                 )
             } else if (showPasteMode) {
                 PasteSection(
@@ -362,7 +377,9 @@ private fun AddModeChooser(
     onPasteMode: () -> Unit,
     onManualMode: () -> Unit,
     onScanFromGallery: () -> Unit,
-    onScanFromCamera: () -> Unit
+    onScanFromCamera: () -> Unit,
+    hebrewOcr: Boolean = false,
+    onHebrewOcrChange: (Boolean) -> Unit = {}
 ) {
     Text(
         text = stringResource(R.string.how_to_add),
@@ -424,6 +441,22 @@ private fun AddModeChooser(
                 modifier = Modifier.padding(start = 40.dp)
             )
             Spacer(modifier = Modifier.height(10.dp))
+            // Hebrew OCR toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 40.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = stringResource(R.string.hebrew_ocr),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Switch(checked = hebrewOcr, onCheckedChange = onHebrewOcrChange)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

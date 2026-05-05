@@ -174,4 +174,5 @@
     <string name="repair_no_changes">לא נמצאו מתכונים הדורשים תיקון</string>
     <string name="repair_error">שגיאה בתיקון: %s</string>
     <string name="recipe_photo">תמונת מתכון</string>
+    <string name="hebrew_ocr">טקסט בעברית (OCR)</string>
 </resources>
