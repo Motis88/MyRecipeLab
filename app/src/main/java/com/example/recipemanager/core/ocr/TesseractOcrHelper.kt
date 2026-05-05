@@ -1,8 +1,12 @@
-package com.example.recipemanager.core.ocr
+﻿package com.example.recipemanager.core.ocr
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.net.Uri
 import com.googlecode.tesseract.android.TessBaseAPI
 import kotlinx.coroutines.Dispatchers
@@ -25,23 +29,37 @@ object TesseractOcrHelper {
      */
     suspend fun extractText(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
         ensureTrainedData(context)
-        val tessDataDir = File(context.filesDir, "").absolutePath
+        val tessDataDir = context.filesDir.absolutePath
 
-        val bitmap = decodeBitmap(context, uri)
+        val raw = decodeBitmap(context, uri)
             ?: return@withContext ""
+        val bitmap = toGrayscale(raw)
+        if (raw !== bitmap) raw.recycle()
 
         val api = TessBaseAPI()
         return@withContext try {
-            if (!api.init(tessDataDir, LANG)) {
+            if (!api.init(tessDataDir, LANG, TessBaseAPI.OEM_LSTM_ONLY)) {
                 return@withContext ""
             }
+            api.pageSegMode = TessBaseAPI.PageSegMode.PSM_AUTO
             api.setImage(bitmap)
-            val text = api.utF8Text ?: ""
-            text
+            api.utF8Text?.trim() ?: ""
         } finally {
             api.recycle()
             bitmap.recycle()
         }
+    }
+
+    /** Convert bitmap to grayscale - Tesseract accuracy improves significantly. */
+    private fun toGrayscale(src: Bitmap): Bitmap {
+        val result = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(result)
+        val paint = Paint()
+        val cm = ColorMatrix()
+        cm.setSaturation(0f)
+        paint.colorFilter = ColorMatrixColorFilter(cm)
+        canvas.drawBitmap(src, 0f, 0f, paint)
+        return result
     }
 
     /**
