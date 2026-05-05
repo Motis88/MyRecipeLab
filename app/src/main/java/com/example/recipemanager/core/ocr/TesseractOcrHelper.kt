@@ -22,6 +22,8 @@ object TesseractOcrHelper {
 
     private const val LANG = "heb"
     private const val DATA_DIR_NAME = "tessdata"
+    // Bump this whenever a new traineddata file is bundled in assets.
+    private const val MODEL_VERSION = 2
 
     /**
      * Extracts text from [uri] using Tesseract Hebrew model.
@@ -63,18 +65,22 @@ object TesseractOcrHelper {
     }
 
     /**
-     * Copies heb.traineddata from assets to the app's files directory if not already present.
+     * Copies heb.traineddata from assets to the app files directory.
+     * Re-copies if MODEL_VERSION has increased (new model bundled in APK).
      */
     private fun ensureTrainedData(context: Context) {
         val destDir = File(context.filesDir, DATA_DIR_NAME)
         val destFile = File(destDir, "$LANG.traineddata")
-        if (destFile.exists()) return
+        val versionFile = File(context.filesDir, "tessdata_version")
+        val installedVersion = if (versionFile.exists()) versionFile.readText().trim().toIntOrNull() ?: 0 else 0
+        if (destFile.exists() && installedVersion >= MODEL_VERSION) return
         destDir.mkdirs()
         context.assets.open("$DATA_DIR_NAME/$LANG.traineddata").use { input ->
             FileOutputStream(destFile).use { output ->
                 input.copyTo(output)
             }
         }
+        versionFile.writeText(MODEL_VERSION.toString())
     }
 
     private fun decodeBitmap(context: Context, uri: Uri): Bitmap? {
